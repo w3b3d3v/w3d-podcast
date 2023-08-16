@@ -25,16 +25,21 @@ async function textToAudio(text, languageCode, gender, voiceName) {
 
 async function convertConversation(fullConversation) {
   let audioData = Buffer.alloc(0)
+  const tasks = []
 
   for (const [role, message] of fullConversation) {
-    let audio
     if (role === "user") {
-      audio = await textToAudio(message, "pt-BR", "MALE", "pt-BR-Wavenet-B")
+      tasks.push(textToAudio(message, "pt-BR", "MALE", "pt-BR-Wavenet-B"))
     } else {
-      audio = await textToAudio(message, "pt-BR", "FEMALE", "pt-BR-Wavenet-A")
+      tasks.push(textToAudio(message, "pt-BR", "FEMALE", "pt-BR-Wavenet-A"))
     }
-    audioData = Buffer.concat([audioData, audio])
   }
+
+  const audios = await Promise.all(tasks)
+
+  audios.forEach(audio => {
+    audioData = Buffer.concat([audioData, audio])
+  })
 
   // Salve o áudio em um arquivo
   const writeFile = util.promisify(fs.writeFile)
